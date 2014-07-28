@@ -7,10 +7,10 @@ import javax.validation.constraints.NotNull;
 
 public class KafkalogConfiguration extends Configuration {
     @JsonProperty
-    private int port;
+    private int port = 514;
 
     @JsonProperty
-    private int maxLineLength;
+    private int maxLineLength = 8192;
 
     @JsonProperty
     @NotNull
