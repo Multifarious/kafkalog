@@ -23,6 +23,7 @@ public class IngestHandler extends SimpleChannelHandler {
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         if (e.getMessage() instanceof String) {
             String message = (String)e.getMessage();
+            LOG.debug("Received message: {}", message);
             lineBuffer.put(message);
         }
     }
