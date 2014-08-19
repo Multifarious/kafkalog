@@ -53,13 +53,16 @@ public class LogProducer implements Managed {
                 String line = null;
                 try {
                     line = lineBuffer.poll(BUFFER_POLL_TIMEOUT, TimeUnit.MILLISECONDS);
-                    LOG.debug("Sending buffered data: {}", line);
-                    producer.send(messageFactory.create(line));
+                    if(line != null) {
+                        LOG.debug("Sending buffered data: {}", line);
+                        producer.send(messageFactory.create(line));
+                    }
                 } catch (InterruptedException e) {
-                    LOG.trace("Buffer poll timeout expired, continuing.");
+                    Thread.currentThread().interrupt();
                 }
 
                 if (Thread.currentThread().isInterrupted()) {
+                    LOG.info("LogProducer task interrupted. Exiting.");
                     return;
                 }
             }
