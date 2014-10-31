@@ -12,6 +12,12 @@ public class KafkalogConfiguration extends Configuration {
     @JsonProperty
     private int maxLineLength = 8192;
 
+    /**
+     * No point in using unbounded queues anywhere; better to block to give some back
+     * pressure (block & wait) than to run out of memory.
+     */
+    private int maxQueueLength = 50000;
+
     @JsonProperty
     @NotNull
     private String topic;
@@ -26,6 +32,10 @@ public class KafkalogConfiguration extends Configuration {
 
     public int getMaxLineLength() {
         return maxLineLength;
+    }
+
+    public int getMaxQueueLength() {
+        return maxQueueLength;
     }
 
     public String getTopic() {
