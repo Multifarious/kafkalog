@@ -26,8 +26,14 @@ public class LogProducer implements Managed {
     }
 
     public Result healthCheck() {
-        if (runnable == null || runnable.isCancelled() || runnable.isDone()) {
-            return Result.unhealthy("Producer task isn't running");
+        if (runnable == null) {
+            return Result.unhealthy("Producer task not yet started");
+        }
+        if (runnable.isCancelled()) {
+            return Result.unhealthy("Producer task cancelled");
+        }
+        if (runnable.isDone()) {
+            return Result.unhealthy("Producer task not running any more");
         }
 
         return Result.healthy();
@@ -50,18 +56,21 @@ public class LogProducer implements Managed {
         @SuppressWarnings("unchecked")
         public void run() {
             while (true) {
-                String line = null;
+                boolean interrupted = false;
+
                 try {
-                    line = lineBuffer.poll(BUFFER_POLL_TIMEOUT, TimeUnit.MILLISECONDS);
-                    if(line != null) {
+                    String line = lineBuffer.poll(BUFFER_POLL_TIMEOUT, TimeUnit.MILLISECONDS);
+                    if (line != null) {
                         LOG.debug("Sending buffered data: {}", line);
                         producer.send(messageFactory.create(line));
                     }
                 } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+                    interrupted = true;
+                } catch (Exception e) {
+                    LOG.warn("Uncaught problem in LogProducerRunnable: "+e.getMessage(), e);
                 }
 
-                if (Thread.currentThread().isInterrupted()) {
+                if (interrupted || Thread.currentThread().isInterrupted()) {
                     LOG.info("LogProducer task interrupted. Exiting.");
                     return;
                 }
