@@ -23,9 +23,9 @@ Include the following in your `pom.xml`:
 
 <pre>
 &lt;dependency>
-  &lt;groupId>io.ifar&lt;/groupId>
-  &lt;artifactId>skid-road&lt;/artifactId>
-  &lt;version>4&lt;/version>
+  &lt;groupId>io.ifar.kafkalog&lt;/groupId>
+  &lt;artifactId>kafkalog&lt;/artifactId>
+  &lt;version>0&lt;/version>
 &lt;/dependency>
 </pre>
 
