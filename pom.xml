@@ -4,7 +4,7 @@
 
     <groupId>io.ifar.kafkalog</groupId>
     <artifactId>kafkalog</artifactId>
-    <version>1-SNAPSHOT</version>
+    <version>0-SNAPSHOT</version>
 
     <name>Kafkalog</name>
     <description>Bridge from syslog to Kafka.</description>
