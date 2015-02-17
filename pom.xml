@@ -4,7 +4,7 @@
 
     <groupId>io.ifar.kafkalog</groupId>
     <artifactId>kafkalog</artifactId>
-    <version>1-SNAPSHOT</version>
+    <version>2-SNAPSHOT</version>
 
     <name>Kafkalog</name>
     <description>Bridge from syslog to Kafka.</description>
@@ -34,12 +34,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <dropwizard.version>0.7.1</dropwizard.version>
-        <guava.version>17.0</guava.version>
-        <kafka.version>0.8.1.1</kafka.version>
+        <dropwizard.version>0.8.0-rc2</dropwizard.version>
+        <guava.version>18.0</guava.version>
+        <kafka.version>0.8.2.0</kafka.version>
         <junit.version>4.11</junit.version>
         <jetty.version>9.1.4.v20140401</jetty.version>
-        <storm.version>0.9.2-incubating</storm.version>
         <!-- selected to match DW 0.7 -->
         <metrics.version>3.0.2</metrics.version>
         <slf4j.version>1.7.7</slf4j.version>
@@ -73,18 +72,6 @@
             <version>${metrics.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.codahale.metrics</groupId>
-            <artifactId>metrics-graphite</artifactId>
-            <version>${metrics.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <!-- Route everything through Slf4J and then logback. -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -100,7 +87,7 @@
 
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_2.10</artifactId>
+            <artifactId>kafka_2.11</artifactId>
             <version>${kafka.version}</version>
             <exclusions>
                 <exclusion>
@@ -224,6 +211,66 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <id>build-info</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo message="Compiling build information to build-info.json"/>
+                                <tstamp>
+                                    <format property="builtAt" pattern="yyyy-MM-dd'T'HH:mm:ss"
+                                            timezone="America/Los_Angeles"/>
+                                </tstamp>
+                                <exec executable="sh" outputproperty="gitRevision" osfamily="unix">
+                                    <arg value="-c"/>
+                                    <arg value="git log -1 | head -n 1 | cut -f 2 -d &quot; &quot;" />
+                                </exec>
+                                <exec executable="sh" outputproperty="gitBranch" osfamily="unix">
+                                    <arg value="-c" />
+                                    <arg value="git branch | grep &quot;*&quot; | cut -f 2 -d &quot; &quot;" />
+                                </exec>
+                                <exec executable="sh" outputproperty="gitTag" osfamily="unix">
+                                    <arg value="-c" />
+                                    <arg value="git describe --tags 2>&amp;1 | grep -v fatal | grep -v -e --always" />
+                                </exec>
+                                <exec executable="sh" outputproperty="hostname" osfamily="unix">
+                                    <arg value="-c" />
+                                    <arg value="hostname" />
+                                </exec>
+                                <mkdir dir="${project.build.outputDirectory}"/>
+                                <echo file="${project.build.outputDirectory}/build-info.json">{"built_by":"${user.name}",<!--
+--> "built_on":"${hostname}",<!--
+--> "built_at":"${builtAt}",<!--
+--> "git": {<!--
+--> "tag":"${gitTag}",<!--
+--> "branch":"${gitBranch}",<!--
+--> "revision":"${gitRevision}"<!--
+--> },<!--
+--> "maven": {<!--
+--> "group_id":"${project.groupId}",<!--
+--> "artifact_id":"${project.artifactId}",<!--
+--> "version":"${project.version}"<!--
+--> }<!--
+--> }</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.ant</groupId>
+                        <artifactId>ant-nodeps</artifactId>
+                        <version>1.8.1</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-scm-plugin</artifactId>
