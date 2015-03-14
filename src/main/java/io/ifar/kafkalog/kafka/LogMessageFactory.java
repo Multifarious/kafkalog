@@ -1,6 +1,6 @@
 package io.ifar.kafkalog.kafka;
 
-import kafka.producer.KeyedMessage;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
 public class LogMessageFactory {
     private final String topic;
@@ -9,7 +9,7 @@ public class LogMessageFactory {
         this.topic = topic;
     }
 
-    public KeyedMessage<String, String> create(String line) {
-        return new KeyedMessage<String, String>(topic, line);
+    public ProducerRecord<String, String> create(String line) {
+        return new ProducerRecord<>(topic, line);
     }
 }

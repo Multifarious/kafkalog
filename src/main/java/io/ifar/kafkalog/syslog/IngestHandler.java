@@ -1,5 +1,8 @@
 package io.ifar.kafkalog.syslog;
 
+import com.codahale.metrics.MetricRegistry;
+import io.ifar.kafkalog.kafka.LogMessageFactory;
+import io.ifar.kafkalog.kafka.ManagedKafkaProducer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -8,15 +11,16 @@ import org.jboss.netty.channel.socket.DatagramChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.BlockingQueue;
 
 public class IngestHandler extends SimpleChannelHandler {
     static final Logger LOG = LoggerFactory.getLogger(IngestHandler.class);
+    private final ManagedKafkaProducer producer;
+    private final LogMessageFactory messageFactory;
 
-    private final BlockingQueue<String> lineBuffer;
+    public IngestHandler(ManagedKafkaProducer producer, LogMessageFactory messageFactory, MetricRegistry metricRegistry) {
+        this.producer = producer;
+        this.messageFactory = messageFactory;
 
-    public IngestHandler(BlockingQueue<String> lineBuffer) {
-        this.lineBuffer = lineBuffer;
     }
 
     @Override
@@ -26,13 +30,10 @@ public class IngestHandler extends SimpleChannelHandler {
             LOG.warn("Received message of unrecognized type: "+((msg == null) ? "[null]" : msg.getClass().getName())+" received");
             return;
         }
-        String message = (String)e.getMessage();
-        LOG.debug("Received message: {}", message);
-        while (!lineBuffer.offer(message)) {
-            // Ideally we'd have metrics to get JMX (etc) stats to see how often we get this
-            LOG.warn("BlockingQueue full, can not queue message yet; need to wait a bit to let it drain...");
-            Thread.sleep(500L);
-        }
+        String line = (String)e.getMessage();
+
+        // The Kafka producer can/should provide backpressure here.
+        producer.send(messageFactory.create(line));
     }
 
     @Override

@@ -2,7 +2,9 @@ package io.ifar.kafkalog;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
+import io.ifar.kafkalog.kafka.KafkaProducerConfiguration;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public class KafkalogConfiguration extends Configuration {
@@ -24,7 +26,8 @@ public class KafkalogConfiguration extends Configuration {
 
     @JsonProperty
     @NotNull
-    private String brokers;
+    @Valid
+    private KafkaProducerConfiguration kafkaProducer;
 
     public int getPort() {
         return port;
@@ -42,7 +45,7 @@ public class KafkalogConfiguration extends Configuration {
         return topic;
     }
 
-    public String getBrokers() {
-        return brokers;
+    public KafkaProducerConfiguration getKafkaProducerConfiguration() {
+        return kafkaProducer;
     }
 }
