@@ -1,5 +1,6 @@
 package io.ifar.kafkalog;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Queues;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
@@ -42,11 +43,11 @@ public class KafkalogApplication extends Application<KafkalogConfiguration> {
         BlockingQueue<String> lineBuffer = Queues.newLinkedBlockingDeque(configuration.getMaxQueueLength());
         LogMessageFactory messageFactory = new LogMessageFactory(configuration.getTopic());
         Producer producer = createProducer(configuration);
-        LogProducer logProducer = new LogProducer(lineBuffer, messageFactory, producer);
+        LogProducer logProducer = new LogProducer(lineBuffer, messageFactory, producer, environment.metrics());
         environment.lifecycle().manage(logProducer);
 
         IngestService ingestService =
-                new IngestService(configuration.getPort(), configuration.getMaxLineLength(), lineBuffer);
+                new IngestService(configuration.getPort(), configuration.getMaxLineLength(), lineBuffer, environment.metrics());
         environment.lifecycle().manage(ingestService);
 
         environment.jersey().disable();

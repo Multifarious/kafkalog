@@ -74,15 +74,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.codahale.metrics</groupId>
-            <artifactId>metrics-graphite</artifactId>
-            <version>${metrics.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>io.ifar.datadog.metrics</groupId>
+            <artifactId>dropwizard-metrics-datadog</artifactId>
+            <version>0</version>
         </dependency>
 
         <!-- Route everything through Slf4J and then logback. -->

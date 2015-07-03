@@ -1,7 +1,10 @@
 package io.ifar.kafkalog.kafka;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheck.Result;
 import io.dropwizard.lifecycle.Managed;
+import io.ifar.kafkalog.KafkalogApplication;
 import kafka.javaapi.producer.Producer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +15,8 @@ public class LogProducer implements Managed {
     static final Logger LOG = LoggerFactory.getLogger(LogProducer.class);
     static final long BUFFER_POLL_TIMEOUT = 1000L;
 
+    private final Meter sentToProducerMeter;
+
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final BlockingQueue<String> lineBuffer;
     private final LogMessageFactory messageFactory;
@@ -19,10 +24,11 @@ public class LogProducer implements Managed {
 
     private Future runnable;
 
-    public LogProducer(BlockingQueue<String> lineBuffer, LogMessageFactory messageFactory, Producer producer) {
+    public LogProducer(BlockingQueue<String> lineBuffer, LogMessageFactory messageFactory, Producer producer, MetricRegistry metrics) {
         this.lineBuffer = lineBuffer;
         this.messageFactory = messageFactory;
         this.producer = producer;
+        this.sentToProducerMeter = metrics.meter(this.getClass().getSimpleName() + "-" + "sentToProducer");
     }
 
     public Result healthCheck() {
@@ -63,6 +69,7 @@ public class LogProducer implements Managed {
                     if (line != null) {
                         LOG.debug("Sending buffered data: {}", line);
                         producer.send(messageFactory.create(line));
+                        sentToProducerMeter.mark();
                     }
                 } catch (InterruptedException e) {
                     interrupted = true;

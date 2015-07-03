@@ -1,5 +1,8 @@
 package io.ifar.kafkalog.syslog;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import io.ifar.kafkalog.KafkalogApplication;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -13,10 +16,16 @@ import java.util.concurrent.BlockingQueue;
 public class IngestHandler extends SimpleChannelHandler {
     static final Logger LOG = LoggerFactory.getLogger(IngestHandler.class);
 
+    private final Meter receivedMessagesMeter;
+    private final Meter queueFullMeter;
+
     private final BlockingQueue<String> lineBuffer;
 
-    public IngestHandler(BlockingQueue<String> lineBuffer) {
+    public IngestHandler(BlockingQueue<String> lineBuffer,
+                         MetricRegistry metrics) {
         this.lineBuffer = lineBuffer;
+        this.receivedMessagesMeter = metrics.meter(this.getClass().getSimpleName() + "-" + "receivedMessages");
+        this.queueFullMeter = metrics.meter(this.getClass().getSimpleName() + "-" + "queueFull");
     }
 
     @Override
@@ -29,10 +38,11 @@ public class IngestHandler extends SimpleChannelHandler {
         String message = (String)e.getMessage();
         LOG.debug("Received message: {}", message);
         while (!lineBuffer.offer(message)) {
-            // Ideally we'd have metrics to get JMX (etc) stats to see how often we get this
+            queueFullMeter.mark();
             LOG.warn("BlockingQueue full, can not queue message yet; need to wait a bit to let it drain...");
             Thread.sleep(500L);
         }
+        receivedMessagesMeter.mark();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package io.ifar.kafkalog.syslog;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Queues;
 import org.junit.Test;
 
@@ -24,7 +25,7 @@ public class IngestServiceTest {
     @Test
     public void singleMessage() throws Exception {
         BlockingQueue<String> lineBuffer = Queues.newLinkedBlockingDeque();
-        IngestService ingestService = new IngestService(PORT, 8192, lineBuffer);
+        IngestService ingestService = new IngestService(PORT, 8192, lineBuffer, new MetricRegistry());
         ingestService.start();
         sendMessage(DUMB_TEST_MESSAGE);
         assertEquals(DUMB_TEST_MESSAGE, lineBuffer.take());
